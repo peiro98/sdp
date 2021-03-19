@@ -62,15 +62,15 @@ task to compute the second part.
 
 typedef struct th_args_s
 {
-  pthread_t tid;
-  mat_t *v1_t;
-  mat_t *M;
-  mat_t *v2;
-  int i;
-  mat_t *tmp;
-  pthread_mutex_t lock;
-  int *pending;
-  mat_t *res;
+    pthread_t tid;
+    mat_t *v1_t;
+    mat_t *M;
+    mat_t *v2;
+    int i;
+    mat_t *tmp;
+    pthread_mutex_t lock;
+    int *pending;
+    mat_t *res;
 } th_args_t;
 
 long get_time_us();
@@ -81,105 +81,105 @@ static void *compute_product(void *arg);
 
 int main(int argc, char **argv)
 {
-  if (argc != 2)
-  {
-    fprintf(stderr, "USAGE: ./a.out n\n");
-    return 1;
-  }
+    if (argc != 2)
+    {
+        fprintf(stderr, "USAGE: ./a.out n\n");
+        return 1;
+    }
 
-  int n = atoi(argv[1]);
-  th_args_t *th_args = malloc(n * sizeof(th_args_t));
+    int n = atoi(argv[1]);
+    th_args_t *th_args = malloc(n * sizeof(th_args_t));
 
-  srand(get_time_us());
+    srand(get_time_us());
 
-  mat_t *v1, *v1_t, *v2, *M;
+    mat_t *v1, *v1_t, *v2, *M;
 
-  initialize_matrix(&v1, n, 1);   // n x 1
-  initialize_matrix(&v2, n, 1);   // n x 1
-  initialize_matrix(&v1_t, 1, n); // 1 x n
-  initialize_matrix(&M, n, n);    // n x n
+    initialize_matrix(&v1, n, 1);   // n x 1
+    initialize_matrix(&v2, n, 1);   // n x 1
+    initialize_matrix(&v1_t, 1, n); // 1 x n
+    initialize_matrix(&M, n, n);    // n x n
 
-  // fill the matrices with random values
-  randomize(v1);
-  randomize(v2);
-  randomize(M);
+    // fill the matrices with random values
+    randomize(v1);
+    randomize(v2);
+    randomize(M);
 
-  transpose(v1_t, v1);
+    transpose(v1_t, v1);
 
-  _print_matrix("v1", v1);
-  _print_matrix("v1.T", v1_t);
+    _print_matrix("v1", v1);
+    _print_matrix("v1.T", v1_t);
 
-  _print_matrix("v2", v2);
+    _print_matrix("v2", v2);
 
-  _print_matrix("M", M);
+    _print_matrix("M", M);
 
-  mat_t *tmp, *res;
-  initialize_matrix(&tmp, v1_t->nrows, M->ncols); // 1x5
-  initialize_matrix(&res, tmp->nrows, v2->ncols); // 1x1
+    mat_t *tmp, *res;
+    initialize_matrix(&tmp, v1_t->nrows, M->ncols); // 1x5
+    initialize_matrix(&res, tmp->nrows, v2->ncols); // 1x1
 
-  int pending = n;
-  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-  for (int i = 0; i < n; i++)
-  {
-    th_args[i].v1_t = v1_t;
-    th_args[i].M = M;
-    th_args[i].v2 = v2;
-    th_args[i].i = i;
-    th_args[i].tmp = tmp;
-    // lock used to decrement and check the 'pending' counter
-    th_args[i].lock = lock;
-    th_args[i].pending = &pending;
-    th_args[i].res = res;
-    pthread_create(&th_args[i].tid, NULL, &compute_product, (void *)&th_args[i]);
-  }
+    int pending = n;
+    pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+    for (int i = 0; i < n; i++)
+    {
+        th_args[i].v1_t = v1_t;
+        th_args[i].M = M;
+        th_args[i].v2 = v2;
+        th_args[i].i = i;
+        th_args[i].tmp = tmp;
+        // lock used to decrement and check the 'pending' counter
+        th_args[i].lock = lock;
+        th_args[i].pending = &pending;
+        th_args[i].res = res;
+        pthread_create(&th_args[i].tid, NULL, &compute_product, (void *)&th_args[i]);
+    }
 
-  for (int i = 0; i < n; i++)
-  {
-    pthread_join(th_args[i].tid, NULL);
-  }
+    for (int i = 0; i < n; i++)
+    {
+        pthread_join(th_args[i].tid, NULL);
+    }
 
-  _print_matrix("res", res);
+    _print_matrix("res", res);
 
-  // free everything
-  free_matrix(v1);
-  free_matrix(v1_t);
-  free_matrix(v2);
-  free_matrix(M);
-  free_matrix(tmp);
-  free_matrix(res);
+    // free everything
+    free_matrix(v1);
+    free_matrix(v1_t);
+    free_matrix(v2);
+    free_matrix(M);
+    free_matrix(tmp);
+    free_matrix(res);
 }
 
 long get_time_us()
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return 1000 * 1000 * tv.tv_sec + tv.tv_usec;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return 1000 * 1000 * tv.tv_sec + tv.tv_usec;
 }
 
 static void _print_matrix(const char *name, mat_t *m)
 {
-  printf("%s:\n", name);
-  print_matrix(m);
-  printf("\n\n");
+    printf("%s:\n", name);
+    print_matrix(m);
+    printf("\n\n");
 }
 
 static void *compute_product(void *arg)
 {
-  th_args_t *th_args = (th_args_t *)arg;
-  // compute the product of the row vector with the i-th column of the 
-  // matrix M
-  th_args->tmp->data[th_args->i] = row_column_product(th_args->v1_t, 0, th_args->M, th_args->i);
+    th_args_t *th_args = (th_args_t *)arg;
+    // compute the product of the row vector with the i-th column of the
+    // matrix M
+    th_args->tmp->data[th_args->i] = row_column_product(th_args->v1_t, 0, th_args->M, th_args->i);
 
-  // access to the critical section (decrement and check on pending)
-  pthread_mutex_lock(&th_args->lock);
-  *(th_args->pending) -= 1;
-  // check if there are pending threads
-  if (*(th_args->pending) == 0)
-  {
-    // if not, compute the last product
-    dot(th_args->res, th_args->tmp, th_args->v2);
-  }
-  pthread_mutex_unlock(&th_args->lock);
+    // access to the critical section (decrement and check on pending)
+    pthread_mutex_lock(&th_args->lock);
+    *(th_args->pending) -= 1;
+    // check if there are pending threads
+    if (*(th_args->pending) == 0)
+    {
+        // if not, compute the last product
+        dot(th_args->res, th_args->tmp, th_args->v2);
+    }
+    pthread_mutex_unlock(&th_args->lock);
 
-  pthread_exit(NULL);
+    pthread_exit(NULL);
 }
